@@ -31,3 +31,7 @@ class Solution:
         
 
         return result
+
+
+        #or we can just simulate it
+        #https://leetcode.com/problems/zigzag-conversion/discuss/3404/Python-O(n)-Solution-in-96ms-(99.43)
