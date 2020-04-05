@@ -1,0 +1,90 @@
+#include <algorithm>
+#include <climits>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <functional> 
+using namespace std;
+#include <random>
+
+struct Node {
+    int key = 0;
+    int value = 0; 
+    int cnt = 0; 
+    int t = 0;
+    Node(int _key = 0, int _value = 0, int _cnt = 0, int _t = 0) : key(_key), value(_value), cnt(_cnt), t(_t) {}
+    bool operator<(const Node & b) const {
+        if (cnt == b.cnt) {
+            return t < b.t;
+        } else {
+            return cnt < b.cnt;
+        }
+    }
+};
+class LFUCache {
+public:
+    int capacity = 0;
+    unsigned long long time = 0;
+    unordered_map<int, Node> cache;
+    set<Node> sort_cache;
+    LFUCache(int capacity) {
+        this->capacity = capacity;
+        this->time = 0;
+        cache.clear();
+        sort_cache.clear();
+    }
+    
+    int get(int key) {
+        if (capacity == 0) return -1; 
+        time++;
+        if (cache.count(key) != 0) {
+            Node tmp = cache[key]; 
+            sort_cache.erase(tmp);
+            tmp.cnt++; tmp.t = time;
+            cache[key] = tmp; 
+            sort_cache.insert(tmp);
+            return tmp.value;
+
+        } else {
+            return -1;
+        }
+    }
+    
+    void put(int key, int value) {
+        if (capacity == 0) return;
+        time++;
+        if (cache.count(key) != 0) {
+            Node tmp = cache[key]; 
+            sort_cache.erase(tmp);
+            tmp.cnt++; tmp.t = time; tmp.value = value; 
+            cache[key] = tmp; 
+            sort_cache.insert(tmp);            
+            return;
+        }
+
+        if (cache.size() == capacity) {
+            Node e = *(sort_cache.begin());
+            sort_cache.erase(e);
+            cache.erase(e.key);
+        }
+        Node tmp(key, value, 1, time);
+        cache[key] = tmp;
+        sort_cache.insert(tmp);
+    }
+};
+
+/**
+ * Your LFUCache object will be instantiated and called as such:
+ * LFUCache* obj = new LFUCache(capacity);
+ * int param_1 = obj->get(key);
+ * obj->put(key,value);
+ */

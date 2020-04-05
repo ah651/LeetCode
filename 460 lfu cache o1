@@ -1,0 +1,105 @@
+#include <algorithm>
+#include <climits>
+#include <cmath>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+using namespace std;
+#include <random>
+
+struct Node {
+	int value;
+	int cnt;
+	int key;
+	list<int>::iterator pos;
+	Node(int _key = 0, int _value = 0, int _cnt = 0, list<int>::iterator _pos = list<int>::iterator()) : value(_value), cnt(_cnt), key(_key), pos(_pos) {}
+};
+
+class LFUCache {
+public:
+	int capacity = 0;
+	int mini_freq = 0;
+	unordered_map<int, Node> cache;
+	unordered_map<int, list<int>> freq_table;
+	LFUCache(int capacity) {
+		this->capacity = capacity;
+		this->mini_freq = 0;
+		cache.clear();
+		freq_table.clear();
+	}
+
+	int get(int key) {
+		if (capacity == 0) return -1;
+		if (cache.find(key) != cache.end()) {
+			Node tmp = cache[key];
+			freq_table[tmp.cnt].erase(tmp.pos);
+			if (freq_table[tmp.cnt].empty()) {
+				freq_table.erase(tmp.cnt);
+				if (mini_freq == tmp.cnt) mini_freq++;
+			}
+			tmp.cnt++;
+			if (freq_table.count(tmp.cnt) == 0) {
+				freq_table[tmp.cnt] = list<int>();
+			}
+			freq_table[tmp.cnt].push_front(key);
+			tmp.pos = freq_table[tmp.cnt].begin();
+			cache[key] = tmp;
+			return tmp.value;
+		}
+		else {
+			return -1;
+		}
+	}
+
+	void put(int key, int value) {
+		if (capacity == 0) return;
+		if (cache.count(key) != 0) {
+			Node tmp = cache[key];
+			freq_table[tmp.cnt].erase(tmp.pos);
+			if (freq_table[tmp.cnt].empty()) {
+				freq_table.erase(tmp.cnt);
+				if (mini_freq == tmp.cnt) mini_freq++;
+			}
+			tmp.cnt++; tmp.value = value;
+			if (freq_table.count(tmp.cnt) == 0) {
+				freq_table[tmp.cnt] = list<int>();
+			}
+			freq_table[tmp.cnt].push_front(key);
+			tmp.pos = freq_table[tmp.cnt].begin();
+			cache[key] = tmp;
+		}
+		else {
+			if (freq_table.count(1) == 0) {
+				freq_table[1] = list<int>();
+			}
+			if (cache.size() == capacity) {
+				int r = freq_table[mini_freq].back();
+				freq_table[mini_freq].pop_back();
+				if (freq_table[mini_freq].empty()) {
+					freq_table.erase(mini_freq);
+				}
+				cache.erase(r);
+			}
+			freq_table[1].push_front(key); auto pos = freq_table[1].begin();
+			Node tmp(key, value, 1, pos);
+			cache[key] = tmp;
+			mini_freq = 1;
+		}
+	}
+};
+
+/**
+ * Your LFUCache object will be instantiated and called as such:
+ * LFUCache* obj = new LFUCache(capacity);
+ * int param_1 = obj->get(key);
+ * obj->put(key,value);
+ */

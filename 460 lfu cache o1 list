@@ -1,0 +1,107 @@
+#include <algorithm>
+#include <climits>
+#include <cmath>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+using namespace std;
+#include <random>
+
+typedef list<pair<int, list<int>>>::iterator lilit;
+typedef list<int>::iterator liit;
+
+struct Node {
+    int key;
+    int value;
+    int cnt;
+    lilit cnt_pos;
+    liit t_pos;
+    Node(int _key = 0, int _value = 0, int _cnt = 0, lilit _cnt_pos = lilit(), liit _t_pos = liit()) : key(_key), value(_value), cnt(_cnt), cnt_pos(_cnt_pos), t_pos(_t_pos) {}
+};
+
+class LFUCache {
+   public:
+    int capacity = 0;
+    unordered_map<int, Node> cache;
+    list<pair<int, list<int>>> freq_list;
+    LFUCache(int capacity) {
+        this->capacity = capacity;
+        cache.clear();
+        freq_list.clear();
+    }
+
+    int get(int key) {
+        if (capacity == 0) return -1;
+        if (cache.find(key) != cache.end()) {
+            Node tmp = cache[key];
+            tmp.cnt_pos->second.erase(tmp.t_pos);
+            if (tmp.cnt_pos->second.empty()) {
+                tmp.cnt_pos = freq_list.erase(tmp.cnt_pos);
+            } else {
+                tmp.cnt_pos++;
+            }
+            tmp.cnt++;
+            if (tmp.cnt_pos == freq_list.end() || tmp.cnt_pos->first != tmp.cnt) {
+                tmp.cnt_pos = freq_list.insert(tmp.cnt_pos, make_pair(tmp.cnt, list<int>()));
+            }
+            tmp.cnt_pos->second.push_front(key);
+            tmp.t_pos = tmp.cnt_pos->second.begin();
+            cache[key] = tmp;
+            return tmp.value;
+        } else {
+            return -1;
+        }
+    }
+
+    void put(int key, int value) {
+        if (capacity == 0) return;
+        if (cache.find(key) != cache.end()) {
+            Node tmp = cache[key];
+            tmp.cnt_pos->second.erase(tmp.t_pos);
+            if (tmp.cnt_pos->second.empty()) {
+                tmp.cnt_pos = freq_list.erase(tmp.cnt_pos);
+            } else {
+                tmp.cnt_pos++;
+            }
+            tmp.cnt++;
+            tmp.value = value;
+            if (tmp.cnt_pos == freq_list.end() || tmp.cnt_pos->first != tmp.cnt) {
+                tmp.cnt_pos = freq_list.insert(tmp.cnt_pos, make_pair(tmp.cnt, list<int>()));
+            }
+            tmp.cnt_pos->second.push_front(key);
+            tmp.t_pos = tmp.cnt_pos->second.begin();
+            cache[key] = tmp;
+        } else {
+            if (cache.size() == capacity) {
+                int r = freq_list.front().second.back();
+                freq_list.front().second.pop_back();
+                if (freq_list.front().second.empty()) {
+                    freq_list.pop_front();
+                }
+                cache.erase(r);
+            }
+            if (freq_list.empty() ||  freq_list.front().first != 1) {
+                freq_list.push_front(make_pair(1, list<int>()));
+            }
+            freq_list.front().second.push_front(key);
+            Node tmp(key, value, 1, freq_list.begin(), freq_list.front().second.begin());
+            cache[key] = tmp;
+        }
+    }
+};
+
+/**
+ * Your LFUCache object will be instantiated and called as such:
+ * LFUCache* obj = new LFUCache(capacity);
+ * int param_1 = obj->get(key);
+ * obj->put(key,value);
+ */
